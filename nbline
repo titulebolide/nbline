@@ -65,6 +65,9 @@ def nbline(location, folder_opened_at=[], depth=0):
 @click.command()
 @click.argument('location', default='.')
 def nblinewrapper(location):
+    """
+    Counts the number of lines of code at the specified location
+    """
     print(bcolors.BOLD, bcolors.OKBLUE, location, bcolors.ENDC, sep='')
     print(nbline(location))
 
