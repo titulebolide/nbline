@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+
+import click
+import os
+import subprocess
+
+included_extensions = ['py', 'js', 'php', 'html', 'css']
+excluded_folder = ['.git', 'node_modules', 'docs', '__pycache__', 'venv', 'site-packages']
+excluded_files = []
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def line_count(filename):
+    return int(subprocess.check_output(['wc', '-l', filename]).split()[0])
+
+def getext(filename):
+    return os.path.splitext(filename)[1][1:].lower()
+
+def nbline(location, folder_opened_at=[], depth=0):
+    echo_pre = ""
+    for d in range(depth):
+        if d in folder_opened_at:
+            echo_pre+=' │'
+        else:
+            echo_pre+='  '
+    res = 0
+    elts = os.listdir(location)
+    for noelt, elt in enumerate(elts):
+        if noelt == len(elts)-1:
+            echo_pre_elt = echo_pre + " └─ "
+        else:
+            echo_pre_elt = echo_pre + " ├─ "
+        path = os.path.join(location, elt)
+        if os.path.isdir(path):
+            if elt not in excluded_folder:
+                print(echo_pre_elt, bcolors.BOLD, bcolors.OKBLUE, elt, bcolors.ENDC, sep='')
+                if noelt != len(elts) - 1:
+                    res += nbline(path, folder_opened_at=folder_opened_at+[depth], depth=depth+1)
+                else:
+                    res += nbline(path, folder_opened_at=folder_opened_at, depth=depth+1)
+
+            else:
+                print(echo_pre_elt, bcolors.BOLD, bcolors.FAIL, elt, '(excluded)', bcolors.ENDC, sep='')
+        elif elt not in excluded_files and getext(elt) in included_extensions:
+            res += int(
+                subprocess.check_output(
+                    ['wc', '-l', path]
+                ).split()[0]
+            )
+            print(echo_pre_elt, bcolors.OKGREEN, elt, bcolors.ENDC, sep='')
+        else:
+            print(echo_pre_elt, bcolors.FAIL, elt, '(excluded)', bcolors.ENDC, sep='')
+    return res
+
+
+@click.command()
+@click.argument('location', default='.')
+def nblinewrapper(location):
+    print(bcolors.BOLD, bcolors.OKBLUE, location, bcolors.ENDC, sep='')
+    print(nbline(location))
+
+if __name__ == '__main__':
+    nblinewrapper()
