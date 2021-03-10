@@ -78,15 +78,21 @@ def nblinewrapper(quiet, location):
 def gitnbline(location):
     repo = git.Repo(location)
     assert not repo.bare
+    initial_branch = repo.active_branch.name
     date = []
     nbl = []
-    for commit in repo.iter_commits():
-        repo.git.checkout(str(commit))
-        n = nbline(location, True)
-        if n < 2000:
-            date.append(dt.datetime.fromtimestamp(commit.committed_date))
-            nbl.append(n)
-        click.echo(str(commit) + " " + str(commit.committed_date) + " " + str(n))
+    try:
+        for commit in repo.iter_commits():
+            repo.git.checkout(str(commit))
+            n = nbline(location, True)
+            if n < 4000:
+                date.append(dt.datetime.fromtimestamp(commit.committed_date))
+                nbl.append(n)
+            click.echo(str(commit) + " " + str(commit.committed_date) + " " + str(n))
+        repo.git.checkout(initial_branch)
+    except BaseException as e:
+        repo.git.checkout(initial_branch)
+        raise e
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
     plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=10))
     plt.plot(date[::-1], nbl[::-1])
@@ -95,7 +101,6 @@ def gitnbline(location):
     plt.xlabel('date')
     plt.ylabel('# line of codes')
     plt.show()
-
 
 @click.command()
 @click.option('--git/--no-git', default=False)
@@ -108,4 +113,4 @@ def main(git, quiet, location):
         nblinewrapper(quiet, location)
 
 if __name__ == '__main__':
-    main()
+    main(standalone_mode=False)
