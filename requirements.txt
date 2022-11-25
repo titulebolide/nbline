@@ -1,3 +1,0 @@
-click>=7
-matplotlib>=3.3.4
-gitpython>=3.1.14
